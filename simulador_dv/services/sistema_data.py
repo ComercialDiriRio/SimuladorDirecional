@@ -3,12 +3,16 @@
 Carrega DataFrames do Google Sheets (espelho de `carregar_dados_sistema` em app.py),
 sem `st.cache_data`: cache TTL em memória para uso pela API Uvicorn.
 
-Prioridade:
-1. Credenciais JSON (GOOGLE_APPLICATION_CREDENTIALS, SIMULADOR_GSHEETS_CREDENTIALS ou credentials.json na raiz).
-2. Fallback: tentativa com Streamlit + st.connection (se secrets disponíveis no processo).
+Prioridade gspread:
+1. JSON em variável de ambiente (`SIMULADOR_GSHEETS_JSON` ou `GOOGLE_SERVICE_ACCOUNT_JSON`) — ideal Vercel/serverless.
+2. Ficheiro: `GOOGLE_APPLICATION_CREDENTIALS`, `SIMULADOR_GSHEETS_CREDENTIALS` (caminho) ou `credentials.json` na raiz.
+3. Fallback: Streamlit + st.connection (se secrets disponíveis no processo).
 """
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 import logging
 import os
 import re
@@ -128,6 +132,85 @@ def _credential_path() -> Optional[str]:
     return None
 
 
+def _normalize_service_account_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Corrige private_key quando colado na Vercel com \\n literal em vez de newlines reais."""
+    pk = data.get("private_key")
+    if isinstance(pk, str) and "\\n" in pk and pk.count("\n") < 3:
+        data = dict(data)
+        data["private_key"] = pk.replace("\\n", "\n")
+    return data
+
+
+def _parse_service_account_json_string(text: str, source: str) -> Optional[Dict[str, Any]]:
+    text = (text or "").strip()
+    if not text:
+        return None
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as e:
+        logger.warning("%s: JSON inválido (%s). Dica: use SIMULADOR_GSHEETS_JSON_B64 se o painel cortar o valor.", source, e)
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get("type") != "service_account":
+        logger.warning("%s: esperado type=service_account", source)
+        return None
+    if not data.get("private_key") or not data.get("client_email"):
+        logger.warning("%s: faltam private_key ou client_email", source)
+        return None
+    return _normalize_service_account_dict(data)
+
+
+def _service_account_info_from_env() -> Optional[Dict[str, Any]]:
+    """
+    Conta de serviço Google como JSON em env (Vercel / serverless).
+
+    Ordem:
+    1. SIMULADOR_GSHEETS_JSON, GOOGLE_SERVICE_ACCOUNT_JSON
+    2. SIMULADOR_GSHEETS_JSON_B64 (JSON UTF-8 em Base64 — evita problemas com aspas/newlines)
+    3. SIMULADOR_GSHEETS_CREDENTIALS / GOOGLE_APPLICATION_CREDENTIALS se o valor **não** for
+       caminho de ficheiro existente mas for JSON (muitos painéis usam estes nomes por engano)
+    """
+    for key in ("SIMULADOR_GSHEETS_JSON", "GOOGLE_SERVICE_ACCOUNT_JSON"):
+        raw = os.environ.get(key)
+        if not raw:
+            continue
+        parsed = _parse_service_account_json_string(str(raw), f"env {key}")
+        if parsed is not None:
+            logger.info("Credenciais Sheets: a usar JSON de %s", key)
+            return parsed
+
+    b64 = os.environ.get("SIMULADOR_GSHEETS_JSON_B64") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64")
+    if b64:
+        try:
+            # whitespace/newlines comuns ao colar Base64 no painel
+            raw_b64 = re.sub(r"\s+", "", str(b64).strip())
+            decoded = base64.b64decode(raw_b64, validate=False)
+            text = decoded.decode("utf-8")
+            parsed = _parse_service_account_json_string(text, "env SIMULADOR_GSHEETS_JSON_B64")
+            if parsed is not None:
+                logger.info("Credenciais Sheets: a usar Base64 (SIMULADOR_GSHEETS_JSON_B64 ou GOOGLE_SERVICE_ACCOUNT_JSON_B64)")
+                return parsed
+        except (binascii.Error, UnicodeDecodeError) as e:
+            logger.warning("env Base64: falha ao descodificar (%s)", e)
+
+    for key in ("SIMULADOR_GSHEETS_CREDENTIALS", "GOOGLE_APPLICATION_CREDENTIALS"):
+        raw = os.environ.get(key)
+        if not raw:
+            continue
+        text = str(raw).strip()
+        if Path(text).is_file():
+            continue
+        if not text.startswith("{"):
+            continue
+        parsed = _parse_service_account_json_string(text, f"env {key} (inline JSON)")
+        if parsed is not None:
+            logger.info("Credenciais Sheets: a usar JSON inline em %s (não é caminho de ficheiro)", key)
+            return parsed
+
+    return None
+
+
 def _ws_to_df(ws) -> pd.DataFrame:
     try:
         from gspread.utils import ValueRenderOption
@@ -141,18 +224,38 @@ def _ws_to_df(ws) -> pd.DataFrame:
 def _open_spreadsheet_gspread():
     sid = _spreadsheet_id()
     if not sid:
-        return None
-    path = _credential_path()
-    if not path:
+        logger.warning("Sheets: ID_GERAL não contém ID de planilha (/d/...) válido")
         return None
     try:
         import gspread
-
-        gc = gspread.service_account(filename=path)
-        return gc.open_by_key(sid)
-    except Exception as e:
-        logger.warning("gspread open: %s", e)
+    except ImportError:
+        logger.warning("gspread não instalado")
         return None
+
+    info = _service_account_info_from_env()
+    if info is not None:
+        try:
+            gc = gspread.service_account_from_dict(info)
+            return gc.open_by_key(sid)
+        except Exception as e:
+            logger.warning("gspread open (JSON env): %s", e)
+
+    path = _credential_path()
+    if path:
+        try:
+            gc = gspread.service_account(filename=path)
+            return gc.open_by_key(sid)
+        except Exception as e:
+            logger.warning("gspread open (ficheiro %s): %s", path, e)
+            return None
+
+    logger.warning(
+        "Sheets: sem credenciais utilizáveis. Defina SIMULADOR_GSHEETS_JSON (JSON completo) ou "
+        "SIMULADOR_GSHEETS_JSON_B64, ou um ficheiro (GOOGLE_APPLICATION_CREDENTIALS / credentials.json). "
+        "Pode colar o JSON em SIMULADOR_GSHEETS_CREDENTIALS se não for um path. "
+        "Partilhe a planilha com o client_email do JSON (Editor)."
+    )
+    return None
 
 
 def _read_via_streamlit_gsheets():

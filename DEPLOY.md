@@ -6,16 +6,44 @@ Este documento descreve variáveis de ambiente, autenticação em produção e o
 
 | Variável | Descrição |
 |----------|-----------|
-| `GOOGLE_APPLICATION_CREDENTIALS` ou `SIMULADOR_GSHEETS_CREDENTIALS` | Caminho absoluto ao JSON de conta de serviço Google (Sheets/Drive). Alternativa: `credentials.json` na raiz do projeto. |
 | `SIMULADOR_PRODUCTION` | Definir `1` ou `true` para **desativar o login demo** (`demo@direcional.local`), mesmo que `SIMULADOR_API_DEMO` esteja definido. |
+| **Google Sheets** | Ver secção seguinte — sem credenciais válidas a API devolve `503` em logins/dados. |
+
+### Google Sheets — credenciais (prioridade no código)
+
+1. **`SIMULADOR_GSHEETS_JSON`** ou **`GOOGLE_SERVICE_ACCOUNT_JSON`** — JSON completo da conta de serviço (Google Cloud → Chave JSON). Campos: `"type": "service_account"`, `private_key`, `client_email`, etc.
+2. **`SIMULADOR_GSHEETS_JSON_B64`** ou **`GOOGLE_SERVICE_ACCOUNT_JSON_B64`** — o mesmo ficheiro em **Base64** (uma linha), se o painel estragar o JSON. PowerShell:  
+   `[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((Get-Content -Raw .\credentials.json)))`
+3. **`SIMULADOR_GSHEETS_CREDENTIALS`** / **`GOOGLE_APPLICATION_CREDENTIALS`** — caminho de ficheiro **ou**, se o valor **começar por `{`**, JSON inline (útil se colou no nome “CREDENTIALS” por engano).
+4. **`credentials.json`** na raiz (local).
+
+**Se ainda falhar:** confirme **push + redeploy** com o código que lê estas variáveis; partilhe a planilha (`ID_GERAL`) com o **`client_email`** do JSON; veja **logs** do deploy (mensagens `gspread open` / `JSON inválido`).
+
+A planilha em `ID_GERAL` (`simulador_dv/config/constants.py`) deve ter a conta de serviço com acesso (ex.: **Editor**).
 
 ## Variáveis opcionais
 
 | Variável | Descrição |
 |----------|-----------|
 | `SIMULADOR_API_DEMO` | `1` permite login demo apenas se **não** estiver em modo produção (`SIMULADOR_PRODUCTION`). Útil para CI e desenvolvimento local. |
-| `SIMULADOR_SMTP_SERVER`, `SIMULADOR_SMTP_PORT`, `SIMULADOR_SMTP_USER`, `SIMULADOR_SMTP_PASSWORD` | Envio de e-mail com PDF (ver `simulador_dv/services/email_smtp.py`). |
+| **SMTP** — `SIMULADOR_SMTP_SERVER`, `SIMULADOR_SMTP_PORT`, `SIMULADOR_SMTP_USER`, `SIMULADOR_SMTP_PASSWORD` | Envio de e-mail com PDF. **Aliases:** `SMTP_*` ou `EMAIL_SMTP_*` (ver `simulador_dv/services/email_smtp.py`). |
 | `SIMULADOR_SESSION_BACKEND` | `memory` (padrão): sessões na RAM do processo. Para várias instâncias, planear backend externo (Redis) — não incluído por defeito. |
+| `SIMULADOR_LOGINS_WORKSHEET` | Nome da aba de logins (padrão: `BD Logins`). |
+| `SIMULADOR_SISTEMA_CACHE_TTL_SEC` | TTL do cache Sheets em segundos (padrão: `300`). |
+
+### Checklist Vercel (Environment Variables)
+
+| Key | Valor |
+|-----|--------|
+| `SIMULADOR_PRODUCTION` | `1` |
+| `SIMULADOR_GSHEETS_JSON` | JSON inteiro da conta de serviço (ou use `SIMULADOR_GSHEETS_JSON_B64`) |
+| `SIMULADOR_GSHEETS_JSON_B64` | (Opcional) mesmo JSON em Base64, uma linha |
+| `SIMULADOR_SMTP_SERVER` | ex.: `smtp.gmail.com` |
+| `SIMULADOR_SMTP_PORT` | `587` |
+| `SIMULADOR_SMTP_USER` | e-mail remetente |
+| `SIMULADOR_SMTP_PASSWORD` | palavra-passe de app / SMTP |
+
+Guardar variáveis → **Redeploy** do projeto.
 
 ## Proibição de demo em produção
 

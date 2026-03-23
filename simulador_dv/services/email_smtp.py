@@ -16,12 +16,42 @@ from simulador_dv.services.secrets_loader import load_secrets_toml
 
 
 def _email_config() -> Optional[Dict[str, Any]]:
-    if os.environ.get("SIMULADOR_SMTP_SERVER"):
+    """
+    SMTP por variáveis de ambiente (Vercel / CI). Ordem:
+    1) SIMULADOR_SMTP_* (preferido)
+    2) SMTP_* / EMAIL_SMTP_* (aliases curtos)
+    3) .streamlit/secrets.toml secção [email]
+    """
+    server = (
+        (os.environ.get("SIMULADOR_SMTP_SERVER") or "").strip()
+        or (os.environ.get("SMTP_SERVER") or "").strip()
+        or (os.environ.get("EMAIL_SMTP_SERVER") or "").strip()
+    )
+    if server:
+        try:
+            port = int(
+                os.environ.get("SIMULADOR_SMTP_PORT")
+                or os.environ.get("SMTP_PORT")
+                or os.environ.get("EMAIL_SMTP_PORT")
+                or "587"
+            )
+        except ValueError:
+            port = 587
+        user = (
+            (os.environ.get("SIMULADOR_SMTP_USER") or "").strip()
+            or (os.environ.get("SMTP_USER") or "").strip()
+            or (os.environ.get("EMAIL_SMTP_USER") or "").strip()
+        )
+        password = (
+            (os.environ.get("SIMULADOR_SMTP_PASSWORD") or "")
+            or (os.environ.get("SMTP_PASSWORD") or "")
+            or (os.environ.get("EMAIL_SMTP_PASSWORD") or "")
+        ).strip().replace(" ", "")
         return {
-            "smtp_server": os.environ["SIMULADOR_SMTP_SERVER"].strip(),
-            "smtp_port": int(os.environ.get("SIMULADOR_SMTP_PORT", "587")),
-            "sender_email": os.environ.get("SIMULADOR_SMTP_USER", "").strip(),
-            "sender_password": os.environ.get("SIMULADOR_SMTP_PASSWORD", "").strip().replace(" ", ""),
+            "smtp_server": server,
+            "smtp_port": port,
+            "sender_email": user,
+            "sender_password": password,
         }
     secrets = load_secrets_toml()
     em = secrets.get("email")
@@ -44,7 +74,11 @@ def enviar_email_smtp(
 ) -> Tuple[bool, str]:
     cfg = _email_config()
     if not cfg:
-        return False, "Configurações de e-mail não encontradas (secrets.toml [email] ou variáveis SIMULADOR_SMTP_*)."
+        return (
+            False,
+            "Configurações de e-mail não encontradas "
+            "(SIMULADOR_SMTP_* / SMTP_* / secrets.toml [email]).",
+        )
 
     try:
         smtp_server = cfg["smtp_server"]

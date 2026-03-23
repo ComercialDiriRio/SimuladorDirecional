@@ -124,7 +124,11 @@ def append_linha_bd_simulacoes(nova_linha: Dict[str, Any]) -> Tuple[bool, str]:
     """
     sh = _open_spreadsheet_gspread()
     if sh is None:
-        return False, "Credenciais Google Sheets indisponíveis (credentials.json ou GOOGLE_APPLICATION_CREDENTIALS)"
+        return (
+            False,
+            "Credenciais Google Sheets indisponíveis "
+            "(SIMULADOR_GSHEETS_JSON, GOOGLE_APPLICATION_CREDENTIALS ou credentials.json)",
+        )
 
     try:
         ws = sh.worksheet(ABA_DESTINO)
