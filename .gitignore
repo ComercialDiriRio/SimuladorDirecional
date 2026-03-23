@@ -1,0 +1,11 @@
+# Segredos Streamlit (nunca commitar)
+.streamlit/secrets.toml
+
+# Credenciais locais
+credentials.json
+*.pem
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc

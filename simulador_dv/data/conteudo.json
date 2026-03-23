@@ -1,0 +1,61 @@
+{
+  "campanhas": [
+    {
+      "id": "camp-1",
+      "titulo": "Super Feirão Direcional 2026",
+      "descricao": "Condições imperdíveis com subsídio de até R$ 55.000 e entrada facilitada. Válido até 31/03/2026.",
+      "imagem": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600",
+      "data": "2026-03-31"
+    },
+    {
+      "id": "camp-2",
+      "titulo": "Minha Casa, Minha Vida — Faixa 2",
+      "descricao": "Taxas de juros a partir de 4,75% a.a. para famílias com renda de até R$ 4.400. Aproveite!",
+      "imagem": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600",
+      "data": "2026-06-30"
+    },
+    {
+      "id": "camp-3",
+      "titulo": "Campanha Indicou, Ganhou",
+      "descricao": "Indique um amigo e ganhe R$ 1.000 de bônus na sua entrada. Sem limite de indicações.",
+      "imagem": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600",
+      "data": "2026-12-31"
+    }
+  ],
+  "treinamentos": [
+    {
+      "id": "trein-1",
+      "titulo": "Treinamento: Simulador DV",
+      "descricao": "Aprenda a utilizar o Simulador Imobiliário DV de forma completa, da entrada de dados ao fechamento.",
+      "imagem": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600",
+      "data": "2026-02-28",
+      "video_url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      "imagens_drive": [
+        {
+          "titulo": "Slide 1 — Visão geral",
+          "url": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800"
+        }
+      ],
+      "pdfs": [
+        {
+          "titulo": "Apostila (exemplo)",
+          "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+      ]
+    },
+    {
+      "id": "trein-2",
+      "titulo": "Workshop: Técnicas de Negociação",
+      "descricao": "Estratégias avançadas de negociação para corretores imobiliários. Aumente sua taxa de conversão.",
+      "imagem": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600",
+      "data": "2026-03-15"
+    },
+    {
+      "id": "trein-3",
+      "titulo": "Módulo: Financiamento Habitacional",
+      "descricao": "Entenda as faixas de financiamento, subsídios e como encontrar a melhor opção para cada cliente.",
+      "imagem": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600",
+      "data": "2026-04-10"
+    }
+  ]
+}

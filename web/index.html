@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador Imobiliário DV</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Chart.js / Leaflet: carregados sob demanda em `web/js/lib/asset-loaders.js` -->
+</head>
+<body>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="panel-login" class="login-wrapper">
+    <div class="login-container">
+      <img src="/static/img/logoAzul.png" alt="Direcional" class="login-logo" />
+      <h3 class="login-title">LOGIN</h3>
+      <form id="form-login" class="form-grid">
+        <label>E-mail
+          <input type="email" name="email" class="input-field" autocomplete="username" required />
+        </label>
+        <label>Senha
+          <input type="password" name="password" class="input-field" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn-primary btn-full">ACESSAR SISTEMA</button>
+      </form>
+      <p id="login-msg" class="muted"></p>
+      <div class="login-credits">
+        <p>&copy; Grupo Direcional &mdash; Todos os direitos reservados</p>
+        <p>Developed by Lucas Maia</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAIN APP (oculto até login) ============ -->
+  <div id="main-app" class="page-home" style="display:none;">
+
+    <!-- ====== NAVBAR ====== -->
+    <nav class="navbar" id="navbar">
+      <div class="nav-container">
+        <div class="logo" id="nav-logo" title="Ir para Home">
+          <img src="/static/img/logoAzul.png" alt="Direcional" class="logo-img logo-azul" />
+          <img src="/static/img/logoBranca.png" alt="Direcional" class="logo-img logo-branca" style="display:none;" />
+        </div>
+        <div class="nav-links-wrapper">
+          <ul class="nav-links">
+            <li id="nav-simulador" class="nav-link-item"><i class="fas fa-calculator"></i> Simulador</li>
+            <li id="nav-galeria" class="nav-link-item"><i class="fas fa-images"></i> Galeria</li>
+            <li id="nav-campanhas" class="nav-link-item"><i class="fas fa-bullhorn"></i> Campanhas</li>
+            <li id="nav-treinamentos" class="nav-link-item"><i class="fas fa-graduation-cap"></i> Treinamentos</li>
+          </ul>
+          <span class="nav-active-indicator" id="navActiveIndicator" aria-hidden="true"></span>
+        </div>
+        <div class="profile-section">
+          <div class="profile-trigger" id="profileTrigger" title="Meu perfil">
+            <span id="navInitial">C</span>
+          </div>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-header">
+              <h4 id="userNameDisplay">Corretor</h4>
+              <p id="userRoleDisplay">Consultor</p>
+              <p id="userImobDisplay" class="imob-tag"></p>
+            </div>
+            <ul class="dropdown-menu">
+              <li id="dd-config"><i class="fas fa-user-gear"></i> Configurações</li>
+              <li id="dd-historico"><i class="fas fa-clock-rotate-left"></i> Histórico de Simulações</li>
+              <li class="divider"></li>
+              <li id="dd-logout" class="logout-item"><i class="fas fa-power-off"></i> Sair</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ====== MAIN CONTENT ====== -->
+    <main id="main-content">
+
+      <!-- ====== HOME SECTION ====== -->
+      <section id="home-section" class="page-section home-active">
+        <div id="home-banners-admin-bar" class="home-banners-admin-bar" style="display:none;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-home-banners-edit" title="Editar imagens do carrossel">
+            <i class="fas fa-panorama"></i> Editar banners da home (ADM)
+          </button>
+        </div>
+        <div class="main-banner-container" id="homeBanner">
+          <div class="banner-slide active" style="background-image:url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');"></div>
+          <div class="banner-slide" style="background-image:url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');"></div>
+          <div class="banner-slide" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');"></div>
+          <div class="banner-overlay" aria-hidden="true"></div>
+          <button type="button" class="banner-nav-btn banner-prev" id="banner-prev-btn">&#10094;</button>
+          <button type="button" class="banner-nav-btn banner-next" id="banner-next-btn">&#10095;</button>
+          <div class="banner-dots" id="banner-dots">
+            <div class="b-dot active"></div>
+            <div class="b-dot"></div>
+            <div class="b-dot"></div>
+          </div>
+        </div>
+        <div class="home-buttons-bar">
+          <div class="sq-btn" id="home-btn-simulador">
+            <div class="sq-btn-icon-wrap"><i class="fas fa-calculator"></i></div>
+            <span>Simulador</span>
+          </div>
+          <div class="sq-btn" id="home-btn-galeria">
+            <div class="sq-btn-icon-wrap"><i class="fas fa-images"></i></div>
+            <span>Galeria de Produtos</span>
+          </div>
+          <div class="sq-btn" id="home-btn-campanhas">
+            <div class="sq-btn-icon-wrap"><i class="fas fa-bullhorn"></i></div>
+            <span>Campanhas</span>
+          </div>
+          <div class="sq-btn" id="home-btn-treinamentos">
+            <div class="sq-btn-icon-wrap"><i class="fas fa-graduation-cap"></i></div>
+            <span>Treinamentos</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== WIZARD WRAP (simulador steps + gallery + analytics) ====== -->
+      <div id="wizard-wrap" class="hidden">
+        <div class="block-container wide">
+          <section class="card card-session-info">
+            <div id="stepper-host"></div>
+          </section>
+
+          <!-- === STEP 1: DADOS DO CLIENTE === -->
+          <section class="card" data-step="input">
+            <h3 class="section-title">Dados do Cliente</h3>
+            <button type="button" class="btn btn-secondary btn-full" id="btn-buscar-base">BUSCAR CLIENTE (Base Cadastrada)</button>
+            <div class="cadastro-frame">
+              <div class="cadastro-frame-header">Cadastrar Novo Cliente</div>
+              <form id="form-cadastro" class="form-grid">
+                <label>Nome Completo
+                  <input type="text" name="nome" class="input-field" placeholder="Nome Completo" required />
+                </label>
+                <label>CPF
+                  <input type="text" name="cpf" id="input-cpf" class="input-field" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" required />
+                </label>
+                <label>Data de Nascimento
+                  <input type="date" name="data_nascimento" class="input-field" value="1990-01-01" min="1900-01-01" required />
+                </label>
+                <hr/>
+                <label>Participantes na Renda
+                  <input type="number" name="qtd_participantes" id="qtd-participantes" class="input-field" value="1" min="1" max="4" step="1" />
+                </label>
+                <div id="rendas-extra"></div>
+                <label>Ranking do Cliente
+                  <select name="ranking" class="input-field">
+                    <option value="DIAMANTE" selected>DIAMANTE</option>
+                    <option value="OURO">OURO</option>
+                    <option value="PRATA">PRATA</option>
+                    <option value="BRONZE">BRONZE</option>
+                    <option value="AÇO">AÇO</option>
+                  </select>
+                </label>
+                <label>Política de Pro Soluto
+                  <select name="politica" class="input-field">
+                    <option value="Direcional" selected>Direcional</option>
+                    <option value="Emcash">Emcash</option>
+                  </select>
+                </label>
+                <div class="toggle-boxes">
+                  <div class="toggle-box">
+                    <span>Fator Social</span>
+                    <label class="toggle-switch"><input type="checkbox" name="social" /><span class="toggle-slider"></span></label>
+                  </div>
+                  <div class="toggle-box">
+                    <span>Cotista FGTS</span>
+                    <label class="toggle-switch"><input type="checkbox" name="cotista" checked /><span class="toggle-slider"></span></label>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Confirmar e Avançar</button>
+              </form>
+              <div class="cadastro-frame-footer"></div>
+            </div>
+            <p id="cadastro-msg" class="msg-feedback"></p>
+            <div id="cliente-ativo-box" class="cliente-ativo-box hidden">
+              <p class="cliente-ativo-title">Cliente Ativo</p>
+              <p class="cliente-ativo-nome" id="cliente-ativo-nome">—</p>
+              <p class="cliente-ativo-hint">Clique abaixo para prosseguir com este cliente:</p>
+              <button type="button" class="btn btn-primary btn-full" id="btn-next-input">Preencher Valores Aprovados</button>
+            </div>
+          </section>
+
+          <!-- === STEP 2: FECHAMENTO APROVADO === -->
+          <section class="card" data-step="fechamento_aprovado">
+            <h3 class="section-title">Valores Aprovados (Fechamento Financeiro)</h3>
+            <p class="muted text-center">Preencha os valores aprovados de financiamento e subsídio.</p>
+            <form id="form-fechamento" class="form-grid">
+              <label>Financiamento Aprovado (R$)
+                <input type="number" name="finan_usado" id="fech-finan" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" />
+              </label>
+              <div class="inline-ref" id="fech-finan-ref"></div>
+              <label>Subsídio Aprovado / FGTS + Subsídio (R$)
+                <input type="number" name="fgts_sub_usado" id="fech-sub" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" />
+              </label>
+              <div class="inline-ref" id="fech-sub-ref"></div>
+              <label>Prazo do Financiamento (meses)
+                <input type="number" name="prazo_financiamento" id="fech-prazo" class="input-field" value="360" min="12" max="600" step="1" />
+              </label>
+              <label>Sistema de Amortização
+                <select name="sistema_amortizacao" id="fech-sistema" class="input-field">
+                  <option value="SAC" selected>SAC</option>
+                  <option value="PRICE">PRICE</option>
+                </select>
+              </label>
+              <div class="comparativo-sac-price" id="fech-comparativo"></div>
+              <button type="submit" class="btn btn-primary btn-full">Salvar Fechamento</button>
+            </form>
+            <p id="fechamento-msg" class="msg-feedback"></p>
+            <hr/>
+            <button type="button" class="btn btn-primary btn-full" id="btn-fechamento-guide">Avançar para Recomendação</button>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-fechamento-selection">Escolha Direta (Estoque)</button>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-back-fechamento_aprovado">Voltar para Dados do Cliente</button>
+          </section>
+
+          <!-- === STEP 3: GUIDE (RECOMENDAÇÕES) === -->
+          <section class="card" data-step="guide">
+            <h3 class="section-title">Recomendação de Imóveis</h3>
+            <div class="tabs-guide">
+              <button type="button" class="tab-btn active" data-tab="viaveis">EMPREENDIMENTOS VIÁVEIS</button>
+              <button type="button" class="tab-btn" data-tab="sugestoes">RECOMENDAÇÃO DE UNIDADES</button>
+              <button type="button" class="tab-btn" data-tab="estoque">ESTOQUE GERAL</button>
+            </div>
+            <div id="tab-panel-viaveis" class="tab-panel">
+              <div id="guide-viaveis-cards" class="cards-grid"></div>
+            </div>
+            <div id="tab-panel-sugestoes" class="tab-panel hidden">
+              <label>Escolha um empreendimento para obter recomendações:
+                <select id="guide-emp-filter" class="input-field"><option value="Todos">Todos</option></select>
+              </label>
+              <div id="guide-recomendacoes" class="cards-scroll"></div>
+            </div>
+            <div id="tab-panel-estoque" class="tab-panel hidden">
+              <div class="estoque-filters">
+                <label>Bairro: <select id="est-bairro" class="input-field"><option value="">Todos</option></select></label>
+                <label>Empreendimento: <select id="est-emp" class="input-field"><option value="">Todos</option></select></label>
+                <label>Cobertura Mínima:
+                  <select id="est-cob" class="input-field">
+                    <option value="0">Todas</option><option value="10">Acima de 10%</option><option value="20">Acima de 20%</option>
+                    <option value="30">Acima de 30%</option><option value="40">Acima de 40%</option><option value="50">Acima de 50%</option>
+                    <option value="60">Acima de 60%</option><option value="70">Acima de 70%</option><option value="80">Acima de 80%</option>
+                    <option value="90">Acima de 90%</option><option value="100">100%</option>
+                  </select>
+                </label>
+                <label>Ordem:
+                  <select id="est-ordem" class="input-field"><option value="asc">Menor Preço</option><option value="desc">Maior Preço</option></select>
+                </label>
+                <label>Preço Máx: <input type="number" id="est-pmax" class="input-field" step="any" min="0" inputmode="decimal" placeholder="Sem limite" /></label>
+              </div>
+              <div id="estoque-table-wrap"></div>
+            </div>
+            <hr/>
+            <button type="button" class="btn btn-primary btn-full" id="btn-next-guide">Avançar para Escolha de Unidade</button>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-back-guide">Voltar para Valores Aprovados</button>
+          </section>
+
+          <!-- === STEP 4: SELECTION === -->
+          <section class="card" data-step="selection">
+            <h3 class="section-title">Escolha de Unidade</h3>
+            <label>Escolha o Empreendimento:
+              <select id="sel-empreendimento" class="input-field"><option value="">—</option></select>
+            </label>
+            <label>Escolha a Unidade:
+              <select id="sel-unidade" class="input-field" disabled><option value="">—</option></select>
+            </label>
+            <div id="termometro-wrap" class="termometro-wrap hidden">
+              <div class="termometro-info">
+                <div><b>Valor de Avaliação:</b><br/><span id="termo-avaliacao">—</span></div>
+                <div><b>Valor considerado (Venda):</b><br/><span id="termo-venda">—</span></div>
+              </div>
+              <hr/>
+              <p class="termometro-title">TERMÔMETRO DE VIABILIDADE</p>
+              <div class="termometro-bar"><div class="termometro-fill" id="termo-fill"></div></div>
+              <small id="termo-pct">0.0% Coberto</small>
+            </div>
+            <label class="mt-1">Valor Final da Unidade (R$)
+              <input type="number" id="valor-final-unidade" class="input-field" step="any" min="0" inputmode="decimal" placeholder="Igual ao valor da unidade se não alterar" />
+            </label>
+            <p class="muted small">Opcional: preencha se houver desconto ou valor diferente do cadastro.</p>
+            <hr/>
+            <button type="button" class="btn btn-primary btn-full" id="btn-next-selection">Avançar para Fechamento</button>
+            <p id="unidade-msg" class="msg-feedback"></p>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-back-selection">Voltar para Recomendação</button>
+          </section>
+
+          <!-- === STEP 5: PAYMENT FLOW === -->
+          <section class="card" data-step="payment_flow">
+            <h3 class="section-title">Distribuição da Entrada (Fechamento)</h3>
+            <div class="payment-banner" id="payment-banner"></div>
+            <h4>Distribuição da Entrada (Saldo a Pagar)</h4>
+            <label>Ato (Entrada Imediata)
+              <input type="number" name="ato_final" id="pay-ato1" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" />
+            </label>
+            <p class="small bold mt-half" style="margin-bottom:.25rem">Redistribuição do Saldo Restante:</p>
+            <div class="btn-row">
+              <button type="button" class="btn btn-secondary" id="btn-dist-2">Distribuir em 2x (30/60)</button>
+              <button type="button" class="btn btn-secondary" id="btn-dist-3">Distribuir em 3x (30/60/90)</button>
+            </div>
+            <div class="cols-3">
+              <label>Ato 30 Dias <input type="number" name="ato_30" id="pay-ato2" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" /></label>
+              <label>Ato 60 Dias <input type="number" name="ato_60" id="pay-ato3" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" /></label>
+              <label>Ato 90 Dias <input type="number" name="ato_90" id="pay-ato4" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" /></label>
+            </div>
+            <hr/>
+            <div class="cols-2">
+              <div>
+                <label>Pro Soluto Direcional <input type="number" name="ps_usado" id="pay-ps" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" /></label>
+                <div class="inline-ref" id="pay-ps-ref"></div>
+                <div class="inline-ref small" id="pay-ps-parcela-info"></div>
+              </div>
+              <div>
+                <label>Parcelas Pro Soluto <input type="number" name="ps_parcelas" id="pay-ps-parc" class="input-field" step="1" min="1" max="84" value="60" /></label>
+                <div class="inline-ref" id="pay-ps-prazo-ref"></div>
+              </div>
+            </div>
+            <div class="pay-mensalidade" id="pay-mensalidade"></div>
+            <hr/>
+            <label>Volta ao Caixa <input type="number" name="volta_caixa" id="pay-vc" class="input-field" step="any" min="0" inputmode="decimal" placeholder="0,00" /></label>
+            <div class="inline-ref" id="pay-vc-ref"></div>
+            <hr/>
+            <div class="gap-status" id="gap-status"></div>
+            <button type="button" class="btn btn-primary btn-full" id="btn-next-payment_flow" disabled>Avançar para Resumo</button>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-back-payment_flow">Voltar para Escolha de Unidade</button>
+          </section>
+
+          <!-- === STEP 6: SUMMARY === -->
+          <section class="card" data-step="summary">
+            <div id="resumo-blocos-html"></div>
+            <hr/>
+            <button type="button" class="btn btn-primary btn-full" id="btn-salvar-sheets">Concluir e Salvar</button>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-export-dialog">Exportar (PDF / E-mail)</button>
+            <p id="salvar-msg" class="msg-feedback"></p>
+            <button type="button" class="btn btn-secondary btn-full mt-half" id="btn-back-summary">Voltar para Fechamento Financeiro</button>
+          </section>
+
+          <!-- === GALERIA === -->
+          <section class="card" data-step="gallery">
+            <h3 class="section-title">Galeria de Produtos</h3>
+            <div id="gallery-tabs-host"></div>
+          </section>
+
+          <!-- === CLIENT ANALYTICS === -->
+          <section class="card" data-step="client_analytics">
+            <h3 class="section-title" id="analytics-titulo">Painel do Cliente</h3>
+            <div id="analytics-cards" class="analytics-cards"></div>
+            <div class="analytics-charts">
+              <div class="chart-box"><canvas id="chart-compra"></canvas></div>
+              <div class="chart-box"><canvas id="chart-renda"></canvas></div>
+              <div class="chart-box chart-wide">
+                <canvas id="chart-fluxo"></canvas>
+                <p class="chart-fluxo-hint muted small text-center">Projeção mensal: use a <strong>roda do mouse</strong> para zoom horizontal e <strong>arraste</strong> para mover o gráfico.</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-full" id="btn-back-analytics">VOLTAR AO SIMULADOR</button>
+          </section>
+        </div>
+      </div>
+
+      <!-- ====== CAMPANHAS SECTION ====== -->
+      <section id="campanhas-section" class="page-section" style="display:none;">
+        <div class="block-container wide">
+          <div class="card">
+            <h3 class="section-title">Campanhas Comerciais</h3>
+            <div id="campanhas-cards" class="conteudo-grid"></div>
+            <div id="campanhas-admin-bar" class="conteudo-admin-bar" style="display:none;">
+              <button type="button" class="btn btn-primary btn-full" id="btn-add-campanha"><i class="fas fa-plus"></i> Adicionar Campanha</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== TREINAMENTOS SECTION ====== -->
+      <section id="treinamentos-section" class="page-section" style="display:none;">
+        <div class="block-container wide">
+          <div class="card">
+            <h3 class="section-title">Treinamentos</h3>
+            <div id="treinamentos-cards" class="conteudo-grid"></div>
+            <div id="treinamentos-admin-bar" class="conteudo-admin-bar" style="display:none;">
+              <button type="button" class="btn btn-primary btn-full" id="btn-add-treinamento"><i class="fas fa-plus"></i> Adicionar Treinamento</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Detalhe Campanha / Treinamento (página interna) -->
+      <section id="conteudo-detalhe-section" class="page-section" style="display:none;">
+        <div class="block-container wide">
+          <div class="card conteudo-detalhe-card">
+            <button type="button" class="btn btn-secondary btn-sm conteudo-detalhe-voltar" id="conteudo-detalhe-voltar">
+              <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+            <div id="conteudo-detalhe-host"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">Direcional Engenharia - Rio de Janeiro | Developed by Lucas Maia</div>
+    </main>
+  </div>
+
+  <!-- ====== MODALS ====== -->
+
+  <!-- Gallery Modal -->
+  <div class="gallery-modal" id="gallery-modal" aria-hidden="true">
+    <button class="gallery-modal__close" id="gallery-modal-close">&times;</button>
+    <button class="gallery-modal__prev" id="gallery-modal-prev">&#8249;</button>
+    <img class="gallery-modal__img" id="gallery-modal-img" alt="" />
+    <button class="gallery-modal__next" id="gallery-modal-next">&#8250;</button>
+  </div>
+
+  <!-- Home: editar banners (ADM) -->
+  <div class="export-overlay hidden" id="home-banners-overlay">
+    <div class="export-dialog config-dialog">
+      <h3 class="text-center">Banners da página inicial</h3>
+      <p class="muted small">Uma URL de imagem por slide (ordem = carrossel). Use links diretos (HTTPS). As alterações ficam guardadas no servidor.</p>
+      <div id="home-banners-url-list" class="home-banners-url-list"></div>
+      <button type="button" class="btn btn-secondary btn-full mt-half" id="home-banners-add-row"><i class="fas fa-plus"></i> Adicionar imagem</button>
+      <p id="home-banners-msg" class="msg-feedback"></p>
+      <div class="btn-row mt-half">
+        <button type="button" class="btn btn-primary" id="home-banners-save">Guardar</button>
+        <button type="button" class="btn btn-secondary" id="home-banners-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Galeria ADM: editar vídeo e imagens -->
+  <div class="export-overlay hidden" id="galeria-edit-overlay">
+    <div class="export-dialog config-dialog">
+      <h3 class="text-center" id="galeria-edit-title">Editar galeria</h3>
+      <p class="muted small">Alterações ficam guardadas no servidor (overrides e, se existir, aba «BD Galeria Empreendimentos»). Inclua na lista books/fichas técnicas se quiser mantê-los nos botões de download.</p>
+      <label id="galeria-edit-nome-wrap">Nome do empreendimento
+        <input type="text" id="galeria-edit-nome" class="input-field" placeholder="Ex.: RESERVA JACAREPAGUÁ" />
+      </label>
+      <label>URL do vídeo (YouTube)
+        <input type="url" id="galeria-edit-video" class="input-field" placeholder="https://www.youtube.com/watch?v=..." />
+      </label>
+      <div class="form-row-2">
+        <label>Latitude (mapa, opcional)
+          <input type="text" id="galeria-edit-lat" class="input-field" placeholder="-22.90" inputmode="decimal" />
+        </label>
+        <label>Longitude (mapa, opcional)
+          <input type="text" id="galeria-edit-lon" class="input-field" placeholder="-43.17" inputmode="decimal" />
+        </label>
+      </div>
+      <p class="small bold mt-half" style="margin-bottom:.35rem">Imagens e documentos (nome + link)</p>
+      <div id="galeria-edit-imagens-list" class="galeria-edit-imagens-list"></div>
+      <button type="button" class="btn btn-secondary btn-full mt-half" id="galeria-edit-add-img"><i class="fas fa-plus"></i> Adicionar linha</button>
+      <p id="galeria-edit-msg" class="msg-feedback"></p>
+      <div class="galeria-edit-actions mt-half">
+        <button type="button" class="btn btn-primary btn-full" id="galeria-edit-save"><i class="fas fa-check"></i> Finalizar</button>
+        <button type="button" class="btn btn-danger btn-full mt-half" id="galeria-edit-delete" style="display:none;"><i class="fas fa-trash"></i> Excluir</button>
+        <button type="button" class="btn btn-secondary btn-full mt-half" id="galeria-edit-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Dialog -->
+  <div class="export-overlay hidden" id="export-overlay">
+    <div class="export-dialog">
+      <h3 class="text-center">Resumo da Simulação</h3>
+      <p>Escolha como deseja exportar o documento.</p>
+      <button type="button" class="btn btn-primary btn-full" id="btn-pdf">Baixar PDF</button>
+      <hr/>
+      <p><b>Enviar por E-mail (Cliente)</b></p>
+      <label>Endereço de e-mail do cliente
+        <input type="email" id="export-email" class="input-field" placeholder="cliente@exemplo.com" />
+      </label>
+      <button type="button" class="btn btn-secondary btn-full" id="btn-send-email">Enviar Email para Cliente</button>
+      <hr/>
+      <button type="button" class="btn btn-secondary btn-full" id="btn-close-export">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Buscar Cliente Dialog -->
+  <div class="export-overlay hidden" id="busca-overlay">
+    <div class="export-dialog">
+      <h3 class="text-center">Buscar Cliente Cadastrado</h3>
+      <label>Buscar por Nome ou CPF
+        <input type="text" id="busca-dialog-input" class="input-field" placeholder="Nome ou CPF" />
+      </label>
+      <div class="mt-half">
+        <button type="button" class="btn btn-primary btn-full" id="btn-busca-dialog-search">Buscar</button>
+      </div>
+      <ul id="busca-dialog-results" class="historico-lista"></ul>
+      <hr/>
+      <button type="button" class="btn btn-secondary btn-full" id="btn-close-busca">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Configurações Modal -->
+  <div class="export-overlay hidden" id="config-overlay">
+    <div class="export-dialog config-dialog">
+      <h3 class="text-center">Configurações do Perfil</h3>
+      <form id="form-config" class="form-grid">
+        <label>Nome Completo
+          <input type="text" id="conf-nome" class="input-field" placeholder="Seu nome" />
+        </label>
+        <label>E-mail
+          <input type="email" id="conf-email" class="input-field" placeholder="seu@email.com" />
+        </label>
+        <label>Nova Senha (deixe em branco para manter)
+          <input type="password" id="conf-senha" class="input-field" placeholder="••••••••" />
+        </label>
+        <label>Cargo
+          <input type="text" id="conf-cargo" class="input-field" readonly style="opacity:.7;background:#eee;" />
+        </label>
+        <label>Imobiliária
+          <input type="text" id="conf-imob" class="input-field" readonly style="opacity:.7;background:#eee;" />
+        </label>
+      </form>
+      <p id="config-msg" class="msg-feedback"></p>
+      <div class="btn-row mt-half">
+        <button type="button" class="btn btn-primary" id="btn-save-config">Salvar Alterações</button>
+        <button type="button" class="btn btn-secondary" id="btn-close-config">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Histórico de Simulações Modal -->
+  <div class="export-overlay hidden" id="historico-overlay">
+    <div class="export-dialog">
+      <h3 class="text-center">Histórico de Simulações</h3>
+      <label>Buscar por Nome ou CPF
+        <input type="text" id="historico-search-input" class="input-field" placeholder="Nome ou CPF" />
+      </label>
+      <div class="mt-half">
+        <button type="button" class="btn btn-primary btn-full" id="btn-historico-search">Buscar</button>
+      </div>
+      <ul id="historico-modal-results" class="historico-lista"></ul>
+      <hr/>
+      <button type="button" class="btn btn-secondary btn-full" id="btn-close-historico">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Map Fullscreen Overlay -->
+  <div id="map-fullscreen-overlay" class="map-fullscreen-overlay hidden">
+    <div id="map-fullscreen-container" class="map-fullscreen-container"></div>
+    <button type="button" class="map-fullscreen-close" id="map-fullscreen-close">&times;</button>
+  </div>
+
+  <!-- Conteúdo Modal (Campanhas / Treinamentos) -->
+  <div class="export-overlay hidden" id="conteudo-modal-overlay">
+    <div class="export-dialog">
+      <h3 class="text-center" id="conteudo-modal-title">Adicionar</h3>
+      <form id="form-conteudo" class="form-grid">
+        <input type="hidden" id="conteudo-tipo" value="campanhas" />
+        <input type="hidden" id="conteudo-item-id" value="" />
+        <label>Título <input type="text" id="conteudo-titulo" class="input-field" required /></label>
+        <label>Descrição <textarea id="conteudo-descricao" class="input-field" rows="3" style="height:auto;padding:10px 14px;"></textarea></label>
+        <label>URL da imagem de capa <input type="text" id="conteudo-imagem" class="input-field" placeholder="https://... ou link partilhado do Drive" /></label>
+        <label>Data <input type="date" id="conteudo-data" class="input-field" /></label>
+        <label>URL do vídeo (YouTube ou ficheiro no Google Drive) <input type="text" id="conteudo-video" class="input-field" placeholder="https://youtube.com/... ou drive.google.com/file/..." /></label>
+        <div class="conteudo-form-block">
+          <span class="conteudo-form-label">Imagens adicionais (URL — Drive ou direta)</span>
+          <div id="conteudo-imagens-list" class="conteudo-media-rows"></div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-conteudo-add-imagem"><i class="fas fa-plus"></i> Adicionar imagem</button>
+        </div>
+        <div class="conteudo-form-block">
+          <span class="conteudo-form-label">PDFs (link partilhado Drive ou URL direta)</span>
+          <div id="conteudo-pdfs-list" class="conteudo-media-rows"></div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-conteudo-add-pdf"><i class="fas fa-plus"></i> Adicionar PDF</button>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Salvar</button>
+      </form>
+      <hr/>
+      <button type="button" class="btn btn-secondary btn-full" id="btn-close-conteudo">Fechar</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="/static/js/simulador.js"></script>
+</body>
+</html>

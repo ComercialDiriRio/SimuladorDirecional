@@ -1,0 +1,561 @@
+/* Simulador Direcional Elite — tema Streamlit */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --cor-azul-esc: #002c5d;
+  --cor-vermelho: #e30613;
+  --cor-fundo: #fcfdfe;
+  --cor-borda: #eef2f6;
+  --cor-texto-muted: #64748b;
+  --cor-input-bg: #f0f2f6;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+            font-family: 'Inter', sans-serif;
+            color: #002c5d;
+            background-color: #fcfdfe;
+        }
+        
+        /* SCROLL HORIZONTAL */
+        .scrolling-wrapper {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            gap: 20px;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .scrolling-wrapper .card-item {
+            flex: 0 0 auto;
+            width: 320px; /* Largura ajustada para caber mais info */
+        }
+        
+        /* SCROLL IMAGENS */
+        .scrolling-images {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            gap: 15px;
+            padding-bottom: 15px;
+            width: 100%;
+        }
+        .scrolling-images img {
+            height: 250px;
+            width: auto;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid #eee;
+        }
+        .scrolling-images img:hover {
+            transform: scale(1.02);
+            border-color: #002c5d;
+        }
+        
+        /* MASTERPLAN PLACEHOLDER */
+        .masterplan-placeholder {
+            height: 250px;
+            width: 350px;
+            background-color: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex: 0 0 auto;
+            transition: all 0.2s;
+        }
+        .masterplan-placeholder:hover {
+            border-color: #002c5d;
+            color: #002c5d;
+            background-color: #e2e8f0;
+        }
+        
+        /* LIGHTBOX MODAL CSS */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 99999; 
+            padding-top: 20px; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background-color: rgba(0,0,0,0.95);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: auto;
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+            z-index: 100000;
+        }
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            padding: 16px;
+            margin-top: -50px;
+            color: white;
+            font-weight: bold;
+            font-size: 30px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .next { right: 0; border-radius: 3px 0 0 3px; }
+        .prev { left: 0; border-radius: 3px 0 0 3px; }
+        .prev:hover, .next:hover { background-color: rgba(0,0,0,0.8); }
+
+        h1, h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif !important;
+            text-align: center !important;
+            color: #002c5d !important;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .stMarkdown p, .stText, label, .stSelectbox label, .stTextInput label, .stNumberInput label {
+            color: #002c5d !important;
+        }
+
+        .block-container { max-width: 1400px !important; padding: 4rem 2rem !important; }
+
+        /* Títulos padronizados */
+        .stMarkdown h1 { font-size: 1.75rem !important; text-align: center; margin-bottom: 0.5rem !important; }
+        .stMarkdown h2 { font-size: 1.5rem !important; text-align: center; margin-bottom: 0.5rem !important; }
+        .stMarkdown h3 { font-size: 1.35rem !important; text-align: center; margin-bottom: 0.5rem !important; }
+        .stMarkdown h4 { font-size: 1.1rem !important; margin-bottom: 0.4rem !important; }
+        .stMarkdown h5 { font-size: 1rem !important; margin-bottom: 0.3rem !important; }
+
+        div[data-baseweb="input"] {
+            border-radius: 8px !important;
+            border: 1px solid #e2e8f0 !important;
+            background-color: #f0f2f6 !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+
+        div[data-baseweb="input"]:focus-within {
+            border-color: #e30613 !important;
+            box-shadow: 0 0 0 1px #e30613 !important;
+            background-color: #f0f2f6 !important;
+        }
+
+        /* Esconder botões + e - dos number inputs (apenas digitação) */
+        div[data-testid="stNumberInput"] button {
+            display: none !important;
+        }
+        div[data-testid="stNumberInput"] div[data-baseweb="input"],
+        div[data-testid="stTextInput"] div[data-baseweb="input"],
+        div[data-testid="stDateInput"] div[data-baseweb="input"],
+        div[data-baseweb="select"] {
+            background-color: #f0f2f6 !important;
+        }
+
+        /* --- ALTURA UNIFICADA 48px --- */
+        .stTextInput input, .stNumberInput input, .stDateInput input, div[data-baseweb="select"] > div {
+            height: 48px !important;
+            min-height: 48px !important;
+            padding: 0 15px !important;
+            color: #002c5d !important;
+            font-size: 1rem !important;
+            line-height: 48px !important;
+            text-align: left !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        div[data-testid="stNumberInput"] div[data-baseweb="input"] {
+            height: 48px !important;
+            min-height: 48px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        div[data-baseweb="select"] span {
+            text-align: left !important;
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+        }
+
+        div[data-testid="stDateInput"] > div, div[data-baseweb="select"] > div {
+            background-color: #f0f2f6 !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            display: flex;
+            align-items: center;
+        }
+
+        div[data-testid="stDateInput"] div[data-baseweb="input"] {
+            border: none !important;
+            background-color: transparent !important;
+        }
+
+        .stButton button {
+            font-family: 'Inter', sans-serif;
+            border-radius: 8px !important;
+            padding: 0 20px !important;
+            width: 100% !important;
+            height: 60px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 1rem !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .stButton button:active {
+            transform: scale(0.98);
+        }
+
+        div[data-testid="column"] .stButton button, [data-testid="stSidebar"] .stButton button {
+             min-height: 48px !important;
+             height: 48px !important;
+             font-size: 0.9rem !important;
+        }
+
+        /* Botões primários = vermelho direcional */
+        .stButton button[kind="primary"] {
+            background: #e30613 !important;
+            color: #ffffff !important;
+            border: none !important;
+        }
+        .stButton button[kind="primary"]:hover {
+            background: #c40510 !important;
+            box-shadow: 0 8px 20px -5px rgba(227, 6, 19, 0.4) !important;
+        }
+
+        /* Botões secundários (limpar ×, outros) = cinza; Voltar e Sair = azul via .btn-azul-anchor */
+        .stButton button:not([kind="primary"]) {
+            background: #f0f2f6 !important;
+            color: #002c5d !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        .stButton button:not([kind="primary"]):hover {
+            border-color: #cbd5e1 !important;
+            color: #002c5d !important;
+            background: #e2e8f0 !important;
+        }
+
+        /* Voltar e Sair do Sistema = azul direcional (marcador data-btn-azul antes do botão) */
+        div[data-testid="stMarkdown"]:has([data-btn-azul]) + div[data-testid="stButton"] button {
+            background: #002c5d !important;
+            color: #ffffff !important;
+            border: none !important;
+        }
+        div[data-testid="stMarkdown"]:has([data-btn-azul]) + div[data-testid="stButton"] button:hover {
+            background: #001f3d !important;
+            box-shadow: 0 4px 12px rgba(0, 44, 93, 0.35) !important;
+        }
+
+        .stDownloadButton button {
+            background: #f0f2f6 !important;
+            color: #002c5d !important;
+            border: 1px solid #e2e8f0 !important;
+            height: 48px !important;
+        }
+        .stDownloadButton button:hover {
+            border-color: #cbd5e1 !important;
+            color: #002c5d !important;
+            background: #e2e8f0 !important;
+        }
+
+        [data-testid="stSidebar"] .stButton button {
+            padding: 8px 12px !important;
+            font-size: 0.75rem !important;
+            margin-bottom: 2px !important;
+            height: auto !important;
+            min-height: 30px !important;
+        }
+
+        .header-container {
+            text-align: center;
+            padding: 70px 0;
+            background: #ffffff;
+            margin-bottom: 60px;
+            border-radius: 0 0 40px 40px;
+            border-bottom: 1px solid #eef2f6;
+            box-shadow: 0 15px 35px -20px rgba(0,44,93,0.1);
+            position: relative;
+        }
+        .header-title {
+            font-family: 'Montserrat', sans-serif;
+            color: #002c5d;
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+        .header-subtitle {
+            color: #002c5d;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 15px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .card, .fin-box, .recommendation-card, .login-card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #eef2f6;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover, .fin-box:hover, .recommendation-card:hover {
+            transform: translateY(-4px);
+            border-color: #e30613;
+            box-shadow: 0 10px 30px -10px rgba(227,6,19,0.1);
+        }
+
+        .summary-header {
+            font-family: 'Montserrat', sans-serif;
+            background: #002c5d;
+            color: #ffffff !important;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 0.9rem;
+        }
+        .summary-body {
+            background: #ffffff;
+            padding: 40px;
+            border: 1px solid #eef2f6;
+            border-radius: 0 0 12px 12px;
+            margin-bottom: 40px;
+            color: #002c5d;
+        }
+        .custom-alert {
+            background-color: #002c5d;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+            color: #ffffff !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px; 
+        }
+        .price-tag {
+            color: #e30613;
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+        .inline-ref {
+            font-size: 0.72rem;
+            color: #002c5d;
+            margin-top: -12px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            opacity: 0.9;
+        }
+
+        .metric-label { color: #002c5d !important; opacity: 0.7; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+        .metric-value { color: #002c5d !important; font-size: 1.8rem; font-weight: 800; font-family: 'Montserrat', sans-serif; }
+
+        .badge-ideal, .badge-seguro, .badge-facilitado, .badge-multi {
+            background-color: #e30613 !important;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* HOVER CARD EFFECT FOR ANALYTICS */
+        .hover-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 44, 93, 0.15);
+            border-color: #002c5d;
+        }
+
+        [data-testid="stSidebar"] { background-color: #fff; border-right: 1px solid #eef2f6; }
+        
+        .sidebar-profile {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border: 1px solid #eef2f6;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+        }
+        .profile-avatar {
+            width: 56px;
+            height: 56px;
+            background: #002c5d;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem auto;
+            box-shadow: 0 4px 10px rgba(0, 44, 93, 0.3);
+        }
+
+        .hist-item { display: block; width: 100%; text-align: left; padding: 8px; margin-bottom: 4px; border-radius: 8px; background: #fff; border: 1px solid #eef2f6; color: #002c5d; font-size: 0.75rem; transition: all 0.2s; }
+        .hist-item:hover { border-color: #e30613; background: #fff5f5; }
+
+        div[data-baseweb="tab-list"] { justify-content: center !important; gap: 40px; margin-bottom: 40px; }
+        button[data-baseweb="tab"] p { color: #002c5d !important; opacity: 0.6; font-weight: 700 !important; font-family: 'Montserrat', sans-serif !important; font-size: 0.9rem !important; text-transform: uppercase; letter-spacing: 0.1em; }
+        button[data-baseweb="tab"][aria-selected="true"] p { color: #002c5d !important; opacity: 1; }
+        div[data-baseweb="tab-highlight"] { background-color: #e30613 !important; height: 3px !important; }
+
+        /* --- STEPPER (Visual CSS - Non-interactive) --- */
+        .stepper-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3.5rem;
+            position: relative;
+            padding: 0 1rem;
+        }
+        
+        .stepper-line-bg {
+            position: absolute;
+            top: 24px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background-color: #e2e8f0;
+            z-index: 0;
+            border-radius: 99px;
+        }
+        
+        .stepper-step {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: default;
+            flex: 1;
+        }
+        
+        .step-bubble {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: color 0.3s;
+        }
+        
+        /* Active State */
+        .stepper-step.active .step-bubble {
+            background: #002c5d;
+            border-color: #002c5d;
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 6px rgba(0, 44, 93, 0.15);
+        }
+        .stepper-step.active .step-label {
+            color: #002c5d;
+        }
+        
+        /* Completed State */
+        .stepper-step.completed .step-bubble {
+            background: #10b981; /* Emerald 500 */
+            border-color: #10b981;
+            color: white;
+        }
+        .stepper-step.completed .step-label {
+            color: #10b981;
+        }
+
+        .footer { text-align: center; padding: 80px 0; color: #002c5d !important; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; }
+        
+        /* Estilização específica dos botões da Home */
+        div[data-testid="stButton"] button.home-card-btn {
+             height: 250px !important;
+             border-radius: 16px !important;
+             border: 2px solid #eef2f6 !important;
+             background-color: white !important;
+             color: #002c5d !important;
+             box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+             font-size: 1.2rem !important;
+             font-weight: 700 !important;
+        }
+        div[data-testid="stButton"] button.home-card-btn:hover {
+             border-color: #e30613 !important;
+             color: #e30613 !important;
+             transform: translateY(-5px);
+             box-shadow: 0 10px 20px rgba(227, 6, 19, 0.15) !important;
+        }

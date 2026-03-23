@@ -1,0 +1,9 @@
+/* Botão "VOLTAR AO SIMULADOR" full width (marcador data-btn-azul antes do botão) */
+div[data-testid="stMarkdown"]:has([data-btn-azul]) + div[data-testid="stButton"] button {
+    width: 100%;
+    border-radius: 16px;
+    height: 60px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
