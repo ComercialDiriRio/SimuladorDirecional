@@ -1,0 +1,22 @@
+[project]
+name = "simulador-direcional"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "gspread",
+  "google-auth",
+  "pandas",
+  "numpy",
+  "fpdf2",
+  "pytz",
+  "python-dotenv",
+  "pyjwt",
+  "cryptography",
+  "requests",
+  "openpyxl",
+  "Pillow",
+  "fastapi>=0.109",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2",
+  "httpx>=0.26",
+]
